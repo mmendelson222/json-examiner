@@ -16,6 +16,10 @@ namespace JsonExaminer
 {
     public partial class Form1 : Form
     {
+        const string VALUE_DELIMITER = "\t";
+        const string LINE_DELIMITER = "\r\n";
+        const string EXPORT_FILE = "export.txt";
+
         public Form1()
         {
             InitializeComponent();
@@ -98,15 +102,45 @@ namespace JsonExaminer
         /// </summary>
         private void ExportArray(TreeNode arrayNode)
         {
-            
-            if (!(rightClickedNode is ArrayNode)) throw new Exception("Can't export a " + arrayNode.GetType().Name); //should never happen.
-            if (rightClickedNode.Nodes.Count == 0) throw new Exception("Array has 0 elements.");
-            if (!(rightClickedNode.Nodes[0] is ObjectNode)) throw new Exception("Export must be performed on an array of objects.");
+            if (!(arrayNode is ArrayNode)) throw new Exception("Can't export a " + arrayNode.GetType().Name); //should never happen.
+            if (arrayNode.Nodes.Count == 0) throw new Exception("Array has 0 elements.");
+            if (!(arrayNode.Nodes[0] is ObjectNode)) throw new Exception("Export must be performed on an array of objects.");
 
+            var exportCollection = GetStructuredExport(arrayNode);
+            ExportToFile(exportCollection);
+        }
+
+        /// <summary>
+        /// export to a format where properties are ROWS and each record is a COLUMN.
+        /// </summary>
+        private static void ExportToFile(Dictionary<string, List<string>> exportCollection)
+        {
+            List<string> exportLines = new List<string>();
+
+            //loop through key/value pairs.
+            foreach (var kv in exportCollection)
+            {
+                //note: the "value" in this case is the list with all the properties.
+                string propLine = kv.Key + VALUE_DELIMITER + kv.Value.Aggregate((i, j) => i + VALUE_DELIMITER + j);
+                exportLines.Add(propLine);
+            }
+
+            //always export to the default location, file called "export.txt"
+            File.WriteAllText(
+                EXPORT_FILE,
+                exportLines.Aggregate((i, j) => i + LINE_DELIMITER + j)
+            );
+        }
+
+        /// <summary>
+        /// return export in the form of key -> multiple values;
+        /// </summary>
+        private Dictionary<string, List<string>> GetStructuredExport(TreeNode startNode)
+        {
             Dictionary<string, List<string>> export = new Dictionary<string, List<string>>();
 
             //use the first element to determine the properties to be exported. 
-            foreach (TreeNode pNode in rightClickedNode.Nodes[0].Nodes)
+            foreach (TreeNode pNode in startNode.Nodes[0].Nodes)
             {
                 if (pNode is PropertyNode)
                 {
@@ -115,7 +149,7 @@ namespace JsonExaminer
             }
 
             //loop through all nodes and create the export.
-            foreach (TreeNode oNode in rightClickedNode.Nodes)
+            foreach (TreeNode oNode in startNode.Nodes)
             {
                 if (oNode is ObjectNode)  //skip any non-objects in this array.
                 {
@@ -125,7 +159,7 @@ namespace JsonExaminer
                         {
                             if (export.ContainsKey(pNode.Text))
                             {
-                                string value = pNode.Nodes.Count > 0 ? pNode.Nodes[0].Text : string.Empty;
+                                string value = pNode.Nodes.Count > 0 ? RemoveLineBreaks(pNode.Nodes[0].Text) : string.Empty;
                                 export[pNode.Text].Add(value);
                             }
                         }
@@ -133,9 +167,15 @@ namespace JsonExaminer
                 }
             }
 
-            
+            return export;
+        }
 
-            //List<string> exportLines = new List<string>();
+        /// <summary>
+        /// prepare for export by removing special characters which would get in the way - \r\n\t
+        /// </summary>
+        private string RemoveLineBreaks(string p)
+        {
+            return p.Replace("\r", "").Replace("\n", "").Replace("\t", "");
         }
 
         private void PlaceElement(TreeNodeCollection parentNode, object dat)
