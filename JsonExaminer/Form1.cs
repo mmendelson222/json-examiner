@@ -45,10 +45,97 @@ namespace JsonExaminer
         private void LoadIntoTree(string p)
         {
             string allJson = File.ReadAllText(p);
-            object dat = JsonConvert.DeserializeObject(allJson);
+            object data = JsonConvert.DeserializeObject(allJson);
+            PlaceElement(treeView1.Nodes, data);
+        }
 
-            //ParseElement(dat);
-            PlaceElement(treeView1.Nodes, dat);
+        TreeNode rightClickedNode;
+        private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                rightClickedNode = e.Node;
+                tsExport.Enabled = (rightClickedNode is ArrayNode);
+                mnuTreeView.Show(treeView1, e.Location);
+            }
+        }
+
+        private void mnuTreeView_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            try
+            {
+                switch (e.ClickedItem.Name)
+                {
+                    case ("tsExport"):
+                        {
+                            ExportArray(rightClickedNode);
+                            break;
+                        }
+                    case ("tsExpandContract"):
+                        {
+                            if (rightClickedNode.IsExpanded)
+                                rightClickedNode.Toggle();
+                            else
+                                rightClickedNode.ExpandAll();
+                            break;
+                        }
+                }
+            }
+            catch (Exception ex)
+            {
+                statusLabel.Text = ex.Message;
+                Debug.WriteLine(ex.Message);
+                Debug.WriteLine(ex.StackTrace);
+            }
+        }
+
+        /// <summary>
+        /// for now, this export is pretty stupid. 
+        /// It assumes 
+        /// * properties are in the same order for each element
+        /// * all objects have all properites. 
+        /// * we are exporting an array of objects.  Only value properties will be reported, not arrays or other objects etc. 
+        /// </summary>
+        private void ExportArray(TreeNode arrayNode)
+        {
+            
+            if (!(rightClickedNode is ArrayNode)) throw new Exception("Can't export a " + arrayNode.GetType().Name); //should never happen.
+            if (rightClickedNode.Nodes.Count == 0) throw new Exception("Array has 0 elements.");
+            if (!(rightClickedNode.Nodes[0] is ObjectNode)) throw new Exception("Export must be performed on an array of objects.");
+
+            Dictionary<string, List<string>> export = new Dictionary<string, List<string>>();
+
+            //use the first element to determine the properties to be exported. 
+            foreach (TreeNode pNode in rightClickedNode.Nodes[0].Nodes)
+            {
+                if (pNode is PropertyNode)
+                {
+                    export.Add(pNode.Text, new List<string>());
+                }
+            }
+
+            //loop through all nodes and create the export.
+            foreach (TreeNode oNode in rightClickedNode.Nodes)
+            {
+                if (oNode is ObjectNode)  //skip any non-objects in this array.
+                {
+                    foreach (TreeNode pNode in oNode.Nodes)
+                    {
+                        if (pNode is PropertyNode)  //skip any non-properties in this object.
+                        {
+                            if (export.ContainsKey(pNode.Text))
+                            {
+                                string value = pNode.Nodes.Count > 0 ? pNode.Nodes[0].Text : string.Empty;
+                                export[pNode.Text].Add(value);
+                            }
+                        }
+                    }
+                }
+            }
+
+            
+
+            //List<string> exportLines = new List<string>();
         }
 
         private void PlaceElement(TreeNodeCollection parentNode, object dat)
@@ -77,45 +164,10 @@ namespace JsonExaminer
             }
             else if (dat is JValue)
             {
-                TreeNode vNode = new ValueNode(dat.ToString());
-                parentNode.Add(vNode);
-            }
-            else
-            {
-                Debug.WriteLine("Unknown object: " + dat.GetType().Name);
-            }
-        }
-
-        private void PlaceElement2(TreeNodeCollection parentNode, object dat)
-        {
-            if (dat is JArray)
-            {
-                Debug.Indent();
-                TreeNode aNode = new TreeNode("ARRAY");
-                parentNode.Add(aNode);
-                foreach (var item in ((JArray)dat))
-                {
-                    PlaceElement2(aNode.Nodes, item);
-                }
-                Debug.Unindent();
-            }
-            else if (dat is JObject)
-            {
-                TreeNode oNode = new TreeNode("OBJECT");
-                parentNode.Add(oNode);
-                foreach (var prop in ((JObject)dat))
-                {
-                    TreeNode kNode = new TreeNode(prop.Key);
-                    oNode.Nodes.Add(kNode);
-                    PlaceElement2(kNode.Nodes, prop.Value);
-                }
-            }
-            else if (dat is JValue)
-            {
                 //only create a node if something is present.  May present issues for export later. 
                 if (!string.IsNullOrEmpty(dat.ToString()))
                 {
-                    TreeNode vNode = new TreeNode();
+                    TreeNode vNode = new ValueNode(dat.ToString());
                     parentNode.Add(vNode);
                 }
             }
@@ -125,18 +177,7 @@ namespace JsonExaminer
             }
         }
 
-        private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
-        {
-            if (e.Button == System.Windows.Forms.MouseButtons.Right)
-            {
-                if (e.Node.IsExpanded)
-                    e.Node.Toggle();
-                else
-                    e.Node.ExpandAll();
-            }
-        }
-
-        /*
+        [Obsolete("Preliminary version of tree populator. Not sure if useful.")]
         private void ParseElement(object dat)
         {
             //gotta be an object or an array
@@ -168,6 +209,5 @@ namespace JsonExaminer
                 Debug.WriteLine("Unknown object: " + dat.GetType().Name);
             }
         }
-         */
     }
 }
