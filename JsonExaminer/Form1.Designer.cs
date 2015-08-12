@@ -34,10 +34,11 @@
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.btnSelectFile = new System.Windows.Forms.Button();
             this.mnuTreeView = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsExpandContract = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsExpand = new System.Windows.Forms.ToolStripMenuItem();
             this.tsExport = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsContract = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuTreeView.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -79,23 +80,24 @@
             // mnuTreeView
             // 
             this.mnuTreeView.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsExpandContract,
+            this.tsExpand,
+            this.tsContract,
             this.tsExport});
             this.mnuTreeView.Name = "mnuTreeView";
             this.mnuTreeView.ShowImageMargin = false;
-            this.mnuTreeView.Size = new System.Drawing.Size(156, 48);
+            this.mnuTreeView.Size = new System.Drawing.Size(128, 92);
             this.mnuTreeView.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.mnuTreeView_ItemClicked);
             // 
-            // tsExpandContract
+            // tsExpand
             // 
-            this.tsExpandContract.Name = "tsExpandContract";
-            this.tsExpandContract.Size = new System.Drawing.Size(155, 22);
-            this.tsExpandContract.Text = "E&xpand/Contract All";
+            this.tsExpand.Name = "tsExpand";
+            this.tsExpand.Size = new System.Drawing.Size(127, 22);
+            this.tsExpand.Text = "E&xpand All";
             // 
             // tsExport
             // 
             this.tsExport.Name = "tsExport";
-            this.tsExport.Size = new System.Drawing.Size(155, 22);
+            this.tsExport.Size = new System.Drawing.Size(127, 22);
             this.tsExport.Text = "&Export";
             // 
             // statusStrip1
@@ -113,6 +115,12 @@
             this.statusLabel.Name = "statusLabel";
             this.statusLabel.Size = new System.Drawing.Size(70, 17);
             this.statusLabel.Text = "Hello World";
+            // 
+            // tsContract
+            // 
+            this.tsContract.Name = "tsContract";
+            this.tsContract.Size = new System.Drawing.Size(127, 22);
+            this.tsContract.Text = "&Contract All";
             // 
             // Form1
             // 
@@ -140,10 +148,11 @@
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button btnSelectFile;
         private System.Windows.Forms.ContextMenuStrip mnuTreeView;
-        private System.Windows.Forms.ToolStripMenuItem tsExpandContract;
+        private System.Windows.Forms.ToolStripMenuItem tsExpand;
         private System.Windows.Forms.ToolStripMenuItem tsExport;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
+        private System.Windows.Forms.ToolStripMenuItem tsContract;
     }
 }
 

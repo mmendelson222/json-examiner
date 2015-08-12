@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using JsonExaminer.Utilities;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -50,6 +51,8 @@ namespace JsonExaminer
         {
             string allJson = File.ReadAllText(p);
             object data = JsonConvert.DeserializeObject(allJson);
+            treeView1.Nodes.Clear(); //remove tree contents, in case we're reloading.
+            
             PlaceElement(treeView1.Nodes, data);
         }
 
@@ -59,7 +62,11 @@ namespace JsonExaminer
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
                 rightClickedNode = e.Node;
+                //manipulate right click menu options based on the state of the clicked node.
                 tsExport.Enabled = (rightClickedNode is ArrayNode);
+                tsContract.Visible = rightClickedNode.IsExpanded;
+                tsExpand.Visible = !rightClickedNode.IsExpanded;
+
                 mnuTreeView.Show(treeView1, e.Location);
             }
         }
@@ -71,18 +78,21 @@ namespace JsonExaminer
                 switch (e.ClickedItem.Name)
                 {
                     case ("tsExport"):
-                        {
-                            ExportArray(rightClickedNode);
-                            break;
-                        }
-                    case ("tsExpandContract"):
-                        {
-                            if (rightClickedNode.IsExpanded)
-                                rightClickedNode.Toggle();
-                            else
-                                rightClickedNode.ExpandAll();
-                            break;
-                        }
+                        ExportArray(rightClickedNode);
+                        break;
+                    case ("tsExpand"):
+                        //we need to add some extra trickery to maintain scrolling position.
+                        Point scrollPos = ScrollPosition.GetScrollPosition(treeView1);
+                        rightClickedNode.ExpandAll();
+                        rightClickedNode.EnsureVisible();
+                        ScrollPosition.SetScrollPosition(treeView1, scrollPos);
+                        break;
+                    case ("tsContract"):
+                        if (rightClickedNode.IsExpanded)
+                            rightClickedNode.Toggle();
+                        break;
+                    default:
+                        throw new Exception(string.Format("Right-click option {0} not found.", e.ClickedItem.Name));
                 }
             }
             catch (Exception ex)
